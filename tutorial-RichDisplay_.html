@@ -147,7 +147,7 @@ Please refer to the <a href="RichDisplay.html#.RichDisplayRunOptions"><code>Rich
 <h3>Custom Behavior Handling</h3>
 <p>To handle whether or not a user should trigger an action when interacting with the reactions applied to the embed you can provide a <code>filter</code> function, which will be called every time a user reacts to the embed.</p>
 <p>A simple example for this would be a filter that only allows the user who executes the command to interact with it:</p>
-<pre class="prettyprint source lang-javascript"><code>display.run(msg.send('Loading slideshow...'), { filter: (reaction, user) => user === msg.author });
+<pre class="prettyprint source lang-javascript"><code>display.run(await msg.send('Loading slideshow...'), { filter: (reaction, user) => user === msg.author });
 </code></pre>
 </article>
 
