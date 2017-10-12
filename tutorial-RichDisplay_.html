@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>Klasa Tutorial: Included Pieces</title>
+	<title>Klasa Tutorial: Using RichDisplay for Paginated Embeds</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -73,32 +73,84 @@
 			<section class="tutorial-section">
 
 <header>
-    <h1>Included Pieces</h1>
+    <h1>Using RichDisplay for Paginated Embeds</h1>
 </header>
 
 <article>
-    <p>Klasa includes a number of pieces (Commands, Events, Finalizers, Inhibitors, Monitors, Providers) to give any bot a good platform to build on. Any piece can be transfered into your user files and modified without limitation. (If a piece of the same name exists in your user files, it will override the core version of it.) Although some pieces should be modified carefully. For instance, if you transfer the message event, and remove the line telling it to run the monitors, no monitor pieces will run on your bot. At the same time, that precisely gives you full control over the bot that <strong>you</strong> want to run.</p>
+    <p><a href="RichDisplay.html"><code>RichDisplay</code></a> allows you to create a paginated embed that users of your bot will be able to browse by using reaction-based navigation.</p>
+<p>An extremely simple working example can achieved by this code:</p>
+<pre class="prettyprint source lang-javascript"><code>const { Command, RichDisplay } = require('klasa');
+
+module.exports = class extends Command {
+
+	constructor(...args) {
+		super(...args, { description: 'Test RichDisplay' });
+	}
+
+	async run(msg) {
+		return new RichDisplay()
+			.addPage(new Embed().setDescription('First page'))
+			.addPage(new Embed().setDescription('Second page'))
+			.run(await msg.send('Loading...'));
+	}
+
+};
+</code></pre>
+<p>A more complex example with an actual usage is this:</p>
+<pre class="prettyprint source lang-javascript"><code>const display = new RichDisplay(new this.client.methods.Embed()
+	.setColor(0x673AB7)
+	.setAuthor(this.client.user.name, this.client.user.avatarURL())
+	.setTitle('Random Image Slideshow')
+	.setDescription('Scroll between the images using the provided reaction emotes.')
+);
+
+for (let i = 0; i &lt; 10; i++) {
+	display.addPage(template => template.setImage('https://lorempixel.com/400/200/'));
+}
+
+return display.run(await msg.send('Loading slideshow...'));
+</code></pre>
+<blockquote>
+<p>The code is contained in the block of the aforementioned command, inside the <code>async run(msg)</code> method but the display or its pages can easily be reused by placing its initialization in the command's constructor method.</p>
+</blockquote>
+<h2>Code Analysis</h2>
+<p>First we create a new <a href="RichDisplay.html"><code>RichDisplay</code></a> instance, but this time we pass in a <a href="https://discord.js.org/#/docs/main/master/class/MessageEmbed"><code>MessageEmbed</code></a> instance, which will represent our template, from which we will be able to extend upon to create our pages later on:</p>
+<pre class="prettyprint source lang-javascript"><code>const display = new RichDisplay(new this.client.methods.Embed()
+	/* ... */
+);
+</code></pre>
+<p>This <a href="https://discord.js.org/#/docs/main/master/class/MessageEmbed"><code>MessageEmbed</code></a> instance will be accessible to us by either calling the <code>RichDisplay.template</code> property of the <a href="RichDisplay.html"><code>RichDisplay</code></a> instance, in a cloned manner, or directly through the <code>RichDisplay.addPage</code> method, if we pass in an arrow function or a callback.</p>
+<pre class="prettyprint source lang-javascript"><code>for (/* ... */) {
+	display.addPage(template => /* ... */);
+}
+</code></pre>
+<p>From here we will be able to add content or edit properties of the template, and then, return the final embed to the <code>RichDisplay.addPage</code> method to be processed into a <a href="RichDisplay.html"><code>RichDisplay</code></a> page.</p>
+<pre class="prettyprint source lang-javascript"><code>/* ... */
+	display.addPage(template => {
+		template.setImage('https://lorempixel.com/400/200/')
+			.setColor(0xF44336); // You can change everything of the template
+	});
+</code></pre>
+<p>Then, after the <a href="RichDisplay.html"><code>RichDisplay</code></a> is setup, we return, executing it on a new message.</p>
+<pre class="prettyprint source lang-javascript"><code>return display.run(await msg.send('Loading slideshow...'));
+</code></pre>
+<h2>Info Page</h2>
+<p>We can also define an Info page, which will be available through the appropriate reaction emote.
+All we have to do is simply call the <code>RichDisplay.setInfoPage</code> instead than <code>RichDisplay.addPage</code>. The template will be available to us in the same ways as before.</p>
+<blockquote>
+<p>Note: only one info page can be set at once. Setting the info page more than once will override the previously defined info page.</p>
+</blockquote>
+<h2>Personalization</h2>
+<p>Behavior managing can be handled through the second (optional) argument of the <code>RichDisplay.run</code> method.
+The configuration must be defined as an <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer">object literal</a>.
+Please refer to the <a href="RichDisplay.html#.RichDisplayRunOptions"><code>RichDisplay.RichDisplayRunOptions</code></a> documentation page for information about each specific option.</p>
+<h3>Custom Behavior Handling</h3>
+<p>To handle whether or not a user should trigger an action when interacting with the reactions applied to the embed you can provide a <code>filter</code> function, which will be called every time a user reacts to the embed.</p>
+<p>A simple example for this would be a filter that only allows the user who executes the command to interact with it:</p>
+<pre class="prettyprint source lang-javascript"><code>display.run(msg.send('Loading slideshow...', { filter: (reaction, user) => user === msg.author });
+</code></pre>
 </article>
 
-
-<h2>Further Reading:</h2>
-<ul>
-    <li><a href="tutorial-IncludedCommands.html">Included Commands</a></li>
-
-    <li><a href="tutorial-IncludedEvents.html">Included Events</a></li>
-
-    <li><a href="tutorial-IncludedExtendables.html">Included Extendables</a></li>
-
-    <li><a href="tutorial-IncludedFinalizers.html">Included Finalizers</a></li>
-
-    <li><a href="tutorial-IncludedInhibitors.html">Included Inhibitors</a></li>
-
-    <li><a href="tutorial-IncludedLanguages.html">Included Languages</a></li>
-
-    <li><a href="tutorial-IncludedMonitors.html">Included Monitors</a></li>
-
-    <li><a href="tutorial-IncludedProviders.html">Included Providers</a></li>
-</ul>
 
 
 </section>
